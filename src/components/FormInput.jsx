@@ -28,7 +28,7 @@ export default function FormInput() {
     hari: 0,
     tanggal_stok_habis: "",
     indikator_status: "",
-    tgl_buat_pr:"",
+    tgl_buat_pr: "",
   });
 
   const handleChange = (e) => {
@@ -147,7 +147,6 @@ export default function FormInput() {
         <Readonly label="Tgl Buat PR (Otomatis)" value={auto.tgl_buat_pr} />
         <Input label="Keterangan" name="keterangan" />
       </div>
-
       {/* KANAN */}
       <div className="space-y-4">
         <h2 className="font-bold">Ketahanan Stok</h2>
@@ -172,6 +171,7 @@ export default function FormInput() {
           Simpan
         </button>
       </div>
+        
     </form>
   );
 }
