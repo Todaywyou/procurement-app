@@ -1,4 +1,33 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+
+// Komponen input stabil
+function Input({ label, name, value, onChange, ...props }) {
+  return (
+    <div className="flex flex-col">
+      <label className="text-sm font-medium">{label}</label>
+      <input
+        className="border rounded p-2"
+        name={name}
+        value={value ?? ""}
+        onChange={onChange}
+        {...props}
+      />
+    </div>
+  );
+}
+
+function Readonly({ label, value }) {
+  return (
+    <div className="flex flex-col">
+      <label className="text-sm font-medium">{label}</label>
+      <input
+        className="border rounded p-2 bg-gray-100"
+        value={value ?? ""}
+        readOnly
+      />
+    </div>
+  );
+}
 
 export default function FormInput() {
   const [formData, setFormData] = useState({
@@ -6,36 +35,42 @@ export default function FormInput() {
     cat_material: "",
     deskripsi: "",
     satuan: "",
-    jumlah_konsumsi: "",
     konsumsi_bulanan: "",
     konsumsi_per: "",
     konsumsi_rka: "",
     stock_on_hand: "",
-    outstanding_pr: "",
-    pr_date: "",
-    qty_pr: "",
     proc_time: "",
     del_time: "",
     safety_stock: "",
-    tgl_buat_pr: "",
     keterangan: "",
   });
 
-  const [auto, setAuto] = useState({
-    konsumsi_pakai: 0,
-    tanggal_input: "",
-    quantity: 0,
-    bulan: 0,
-    hari: 0,
-    tanggal_stok_habis: "",
-    indikator_status: "",
-  });
+  const [satuanList, setSatuanList] = useState([]);
 
+  // Ambil list satuan
+  useEffect(() => {
+    fetch("http://localhost/inventory-api/get_satuan.php")
+      .then((res) => res.json())
+      .then((data) => {
+        setSatuanList(data);
+        if (data.length > 0) {
+          setFormData((prev) => ({ ...prev, satuan: String(data[0].id) }));
+        }
+      })
+      .catch((err) => console.error("Error fetch satuan:", err));
+  }, []);
+
+  // Handle input (selalu string)
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  useEffect(() => {
+  // Hitung otomatis pakai useMemo
+  const auto = useMemo(() => {
     const b = Number(formData.konsumsi_bulanan) || 0;
     const p = Number(formData.konsumsi_per) || 0;
     const r = Number(formData.konsumsi_rka) || 0;
@@ -45,7 +80,7 @@ export default function FormInput() {
     const tanggal_input = today.toISOString().split("T")[0];
 
     const quantity = Number(formData.stock_on_hand) || 0;
-    const bulan = konsumsi_pakai > 0 ? quantity / (konsumsi_pakai / 2) : 0;
+    const bulan = konsumsi_pakai > 0 ? quantity / konsumsi_pakai  : 0;
     const hari = Math.round(bulan * 30);
 
     const tgl_stok_habis = new Date(today);
@@ -63,7 +98,10 @@ export default function FormInput() {
     else if (ratio >= 1 && ratio <= 1.4) indikator_status = "Kuning";
     else if (ratio > 1.4) indikator_status = "Hijau";
 
-    setAuto({
+    const tgl_buat_pr = new Date(tgl_stok_habis);
+    tgl_buat_pr.setDate(tgl_buat_pr.getDate() - Math.floor(proc + del + safe));
+
+    return {
       konsumsi_pakai,
       tanggal_input,
       quantity,
@@ -71,9 +109,11 @@ export default function FormInput() {
       hari,
       tanggal_stok_habis,
       indikator_status,
-    });
+      tgl_buat_pr: tgl_buat_pr.toISOString().split("T")[0],
+    };
   }, [formData]);
 
+  // Submit data
   const handleSubmit = async (e) => {
     e.preventDefault();
     const res = await fetch("http://localhost/inventory-api/insert.php", {
@@ -89,30 +129,6 @@ export default function FormInput() {
     }
   };
 
-  const Input = ({ label, name, ...props }) => (
-    <div className="flex flex-col">
-      <label className="text-sm font-medium">{label}</label>
-      <input
-        className="border rounded p-2"
-        name={name}
-        value={formData[name] || ""}
-        onChange={handleChange}
-        {...props}
-      />
-    </div>
-  );
-
-  const Readonly = ({ label, value }) => (
-    <div className="flex flex-col">
-      <label className="text-sm font-medium">{label}</label>
-      <input
-        className="border rounded p-2 bg-gray-100"
-        value={value}
-        readOnly
-      />
-    </div>
-  );
-
   return (
     <form
       onSubmit={handleSubmit}
@@ -121,25 +137,76 @@ export default function FormInput() {
       {/* KIRI */}
       <div className="space-y-4">
         <h2 className="font-bold">Data Material</h2>
-        <Input label="Material" name="material" />
-        <Input label="Cat Material" name="cat_material" />
-        <Input label="Deskripsi" name="deskripsi" />
+        <Input
+          label="Material"
+          name="material"
+          value={formData.material}
+          onChange={handleChange}
+        />
+        <Input
+          label="Cat Material"
+          name="cat_material"
+          value={formData.cat_material}
+          onChange={handleChange}
+        />
+        <Input
+          label="Deskripsi"
+          name="deskripsi"
+          value={formData.deskripsi}
+          onChange={handleChange}
+        />
 
         <h2 className="font-bold">Konsumsi</h2>
-        <Input label="Satuan" name="satuan" />
-        <Input label="Jumlah Konsumsi Dipakai" name="jumlah_konsumsi" />
-        <Input label="Konsumsi Bulanan" name="konsumsi_bulanan" />
-        <Input label="Konsumsi Per" name="konsumsi_per" />
-        <Input label="Konsumsi RKA" name="konsumsi_rka" />
-        <Input label="Stock On Hand" name="stock_on_hand" />
+        <div className="flex flex-col">
+          <label className="text-sm font-medium">Satuan</label>
+          <select
+            name="satuan"
+            value={formData.satuan ?? ""}
+            onChange={handleChange}
+            className="border rounded p-2"
+          >
+            <option value="">-- Pilih Satuan --</option>
+            {satuanList.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.nama_satuan}
+              </option>
+            ))}
+          </select>
+        </div>
+        <Readonly label="Jumlah Konsumsi Dipakai" value={auto.konsumsi_pakai} />
+        <Input
+          label="Konsumsi Bulanan"
+          name="konsumsi_bulanan"
+          value={formData.konsumsi_bulanan}
+          onChange={handleChange}
+        />
+        <Input
+          label="Konsumsi Per"
+          name="konsumsi_per"
+          value={formData.konsumsi_per}
+          onChange={handleChange}
+        />
+        <Input
+          label="Konsumsi RKA"
+          name="konsumsi_rka"
+          value={formData.konsumsi_rka}
+          onChange={handleChange}
+        />
+        <Input
+          label="Stock On Hand"
+          name="stock_on_hand"
+          value={formData.stock_on_hand}
+          onChange={handleChange}
+        />
 
-        <h2 className="font-bold">Outstanding PR</h2>
-        <Input label="Outstanding PR" name="outstanding_pr" />
-        <Input label="PR Date" name="pr_date" type="date" />
-        <Input label="Qty PR" name="qty_pr" />
+        <Readonly label="Tgl Buat PR (Otomatis)" value={auto.tgl_buat_pr} />
 
-        <Input label="Tgl Buat PR" name="tgl_buat_pr" type="date" />
-        <Input label="Keterangan" name="keterangan" />
+        <Input
+          label="Keterangan"
+          name="keterangan"
+          value={formData.keterangan}
+          onChange={handleChange}
+        />
       </div>
 
       {/* KANAN */}
@@ -152,9 +219,24 @@ export default function FormInput() {
         <Readonly label="Tanggal Stok Habis" value={auto.tanggal_stok_habis} />
 
         <h2 className="font-bold">Lead Time (Bulan)</h2>
-        <Input label="Proc. Time" name="proc_time" />
-        <Input label="Del. Time" name="del_time" />
-        <Input label="Safety Stock" name="safety_stock" />
+        <Input
+          label="Proc. Time"
+          name="proc_time"
+          value={formData.proc_time}
+          onChange={handleChange}
+        />
+        <Input
+          label="Del. Time"
+          name="del_time"
+          value={formData.del_time}
+          onChange={handleChange}
+        />
+        <Input
+          label="Safety Stock"
+          name="safety_stock"
+          value={formData.safety_stock}
+          onChange={handleChange}
+        />
 
         <h2 className="font-bold">Indikator</h2>
         <Readonly label="Status" value={auto.indikator_status} />
