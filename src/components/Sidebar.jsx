@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import {
   LayoutGrid,
   Database,
@@ -9,75 +9,95 @@ import {
 } from "lucide-react";
 
 export default function Sidebar() {
+  const menuItemClass = ({ isActive }) =>
+    `flex items-center gap-3 p-2 rounded transition-colors ${
+      isActive
+        ? "bg-red-100 text-red-600 font-semibold"
+        : "text-gray-700 hover:bg-gray-300"
+    }`;
+
+  const subItemClass = ({ isActive }) =>
+    `block pl-2 py-1 transition-colors ${
+      isActive ? "text-red-600 font-medium" : "text-gray-500 hover:text-red-400"
+    }`;
+
   return (
     <div className="w-64 h-screen bg-gray-100 shadow-lg fixed left-0 top-0 flex flex-col">
       {/* Logo */}
       <div className="p-4 border-b flex items-center justify-center">
-        <img src="/vite.svg" alt="Logo" className="h-10" />
+        <img src="/logo_per.png" alt="Logo" className="h-12" />
       </div>
-
       {/* Menu Navigasi */}
-      <nav className="flex-1 p-4 space-y-4 text-gray-700">
-        <Link
-          to="/dashboard"
-          className="flex items-center gap-3 p-2 hover:bg-gray-200 rounded"
-        >
+      <nav className="flex-1 p-4 space-y-4">
+        {/* Dashboard */}
+        <NavLink to="/dashboard" className={menuItemClass}>
           <LayoutGrid size={20} /> Dashboard
-        </Link>
+        </NavLink>
 
+        {/* Data */}
         <div>
-          <Link
-            to="/form-input"
-            className="flex items-center gap-3 p-2 hover:bg-gray-200 rounded"
-          >
+          <NavLink to="/data" className={menuItemClass}>
             <Database size={20} /> Data
-          </Link>
-          <div className="ml-8 text-sm text-gray-500">
-            <p>› Input Data</p>
-            <p>› Ekspor Data</p>
+          </NavLink>
+          <div className="ml-8 text-sm">
+            <NavLink to="/data/input" className={subItemClass}>
+              › Input Data
+            </NavLink>
+            <NavLink to="/data/monitor" className={subItemClass}>
+              › Monitor Data
+            </NavLink>
           </div>
         </div>
 
-        <Link
-          to="/inventory"
-          className="flex items-center gap-3 p-2 hover:bg-gray-200 rounded"
-        >
-          <Box size={20} /> Daftar Barang
-        </Link>
-
-        <Link
-          to="/status-barang"
-          className="flex items-center gap-3 p-2 hover:bg-gray-200 rounded"
-        >
-          <ClipboardList size={20} /> Status Barang
-        </Link>
-
-        <Link
-          to="/laporan"
-          className="flex items-center gap-3 p-2 hover:bg-gray-200 rounded"
-        >
-          <FileText size={20} /> Laporan
-        </Link>
-
+        {/* Data OS PR/PO */}
         <div>
-          <Link
-            to="/pr"
-            className="flex items-center gap-3 p-2 hover:bg-gray-200 rounded text-red-500"
-          >
-            <FileText size={20} /> PR
-          </Link>
-          <div className="ml-8 text-sm text-gray-500">
-            <p className="text-red-500">› Input Data Arsip</p>
-            <p>› Laporan PR</p>
+          <NavLink to="/data-os" className={menuItemClass}>
+            <ClipboardList size={20} /> Data OS PR/PO
+          </NavLink>
+          <div className="ml-8 text-sm">
+            <NavLink to="/data-os/pr" className={subItemClass}>
+              › OS PR
+            </NavLink>
+            <NavLink to="/data-os/po" className={subItemClass}>
+              › OS PO
+            </NavLink>
           </div>
         </div>
 
-        <Link
-          to="/notifikasi"
-          className="flex items-center gap-3 p-2 hover:bg-gray-200 rounded"
-        >
+        {/* Daftar Barang */}
+        <NavLink to="/daftar-barang" className={menuItemClass}>
+          <Box size={20} /> Daftar Barang
+        </NavLink>
+
+        {/* Status Barang */}
+        <NavLink to="/laporan" className={menuItemClass}>
+          <ClipboardList size={20} /> Status Barang
+        </NavLink>
+
+        {/* Laporan */}
+        <NavLink to="/status-barang" className={menuItemClass}>
+          <FileText size={20} /> Laporan
+        </NavLink>
+
+        {/* PR */}
+        <div>
+          <NavLink to="/pr" className={menuItemClass}>
+            <FileText size={20} /> PR
+          </NavLink>
+          <div className="ml-8 text-sm">
+            <NavLink to="/pr/input" className={subItemClass}>
+              › Input Data Arsip
+            </NavLink>
+            <NavLink to="/pr/laporan" className={subItemClass}>
+              › Laporan PR
+            </NavLink>
+          </div>
+        </div>
+
+        {/* Notifikasi */}
+        <NavLink to="/notifikasi" className={menuItemClass}>
           <Bell size={20} /> Notifikasi
-        </Link>
+        </NavLink>
       </nav>
     </div>
   );
